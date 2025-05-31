@@ -1,4 +1,4 @@
-# OSX Automnation
+# OSX Automation
 
 yabai feeds the fifo via:
 
