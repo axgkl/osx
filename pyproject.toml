@@ -1,0 +1,13 @@
+[project]
+name = "osx"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "docker>=7.1.0",
+    "humanize>=4.12.3",
+    "psutil>=7.0.0",
+    "reactivex>=4.0.4",
+    "rumps>=0.4.0",
+]

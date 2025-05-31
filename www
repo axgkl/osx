@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+import os
+from Foundation import NSRect, NSPoint, NSSize
+
+
+from AppKit import (
+    NSApplication,
+    NSWindow,
+    NSView,
+    NSImageView,
+    NSGridView,
+    NSImage,
+    NSBitmapImageRep,
+    NSImageScaleProportionallyUpOrDown,
+)
+
+
+class SpacesViewerApp:
+    def __init__(self):
+        # Create the application instance
+        self.app = NSApplication.sharedApplication()
+
+        # Create the main window
+        self.window = NSWindow.alloc().initWithContentRect_styleMask_backing_defer_(
+            NSRect(NSPoint(100, 100), NSSize(800, 600)),
+            15,  # NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
+            2,  # NSBackingStoreBuffered
+            False,
+        )
+        self.window.setTitle_("Spaces Viewer")
+        self.window.makeKeyAndOrderFront_(None)
+
+        # Create the main grid view
+        self.main_grid = NSGridView.alloc().init()
+        self.main_grid.setFrame_(NSRect(NSPoint(0, 0), NSSize(800, 600)))
+        self.main_grid.setRowSpacing_(10)
+        self.main_grid.setColumnSpacing_(10)
+
+        # Populate the grid with space cells
+        self.populate_spaces()
+
+        # Add the grid to the window's content view
+        self.window.contentView().addSubview_(self.main_grid)
+
+    def populate_spaces(self):
+        file_manager = os
+        base_path = os.getcwd()  # Current working directory
+
+        # Create a 4x4 layout for the 13 spaces
+        space_index = 0
+        for row in range(4):  # 4 rows
+            row_views = []
+            for col in range(4):  # 4 columns
+                space_index += 1
+                if space_index > 13:  # Only 13 spaces
+                    break
+
+                # Update the space path to match your directory structure
+                space_path = f"{base_path}/tmp/wins/space_{space_index}"
+                if not os.path.isdir(space_path):
+                    # Add an empty placeholder if the directory doesn't exist
+                    placeholder = NSView.alloc().init()
+                    row_views.append(placeholder)
+                    continue
+
+                # Load images from the space directory
+                image_views = self.load_images_from_directory(space_path)
+
+                # Create a grid for the images
+                image_grid = NSGridView.alloc().init()
+                image_grid.setRowSpacing_(5)
+                image_grid.setColumnSpacing_(5)
+
+                # Add each image view to the image grid, 4 images per row
+                for i in range(0, len(image_views), 4):
+                    image_grid.addRowWithViews_(image_views[i : i + 4])
+
+                # Add the image grid to the row
+                row_views.append(image_grid)
+
+            # Add the row to the main grid
+            self.main_grid.addRowWithViews_(row_views)
+
+    def load_images_from_directory(self, directory):
+        image_views = []
+        for file_name in os.listdir(directory):
+            if file_name.endswith(".png"):
+                file_path = os.path.join(directory, file_name)
+                print(file_path)
+                image = NSImage.alloc().initWithContentsOfFile_(file_path)
+                if image:
+                    image_view = NSImageView.alloc().init()
+                    image_view.setImage_(image)
+                    image_view.setImageScaling_(NSImageScaleProportionallyUpOrDown)
+                    image_views.append(image_view)
+        return image_views
+
+    def run(self):
+        self.app.run()
+
+
+if __name__ == "__main__":
+    app = SpacesViewerApp()
+    app.run()

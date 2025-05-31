@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+
+
+import objc
+from AppKit import (
+    NSApplication,
+    NSWindow,
+    NSView,
+    NSColor,
+    NSBackingStoreBuffered,
+    NSWindowStyleMaskBorderless,
+    NSScreen,
+    NSApplicationActivationPolicyRegular,  # Make sure this is imported
+)
+from Foundation import NSRect, NSPoint, NSSize, NSObject
+from WebKit import WKWebView, WKWebViewConfiguration
+
+
+class AppDelegate(NSObject):
+    def applicationShouldTerminateAfterLastWindowClosed_(self, app):
+        return True
+
+
+class CustomWindow(NSWindow):
+    def keyDown_(self, event):
+        """Handle key events for the window."""
+        chars = event.charactersIgnoringModifiers()
+        if chars == "\x1b":  # ESC key
+            print("ESC pressed, quitting.")
+            NSApplication.sharedApplication().terminate_(self)
+        elif chars.lower() == "q":  # 'q' key
+            print("q pressed, quitting.")
+            NSApplication.sharedApplication().terminate_(self)
+        else:
+            # Propagate other key events to the parent class
+            objc.super(CustomWindow, self).keyDown_(event)
+
+    def acceptsFirstResponder(self):
+        """Ensure the window can accept key events."""
+        return True
+
+
+class WebViewerApp:
+    def __init__(self):
+        self.app = NSApplication.sharedApplication()
+        self.app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
+
+        self.delegate = AppDelegate.alloc().init()
+        self.app.setDelegate_(self.delegate)
+
+        screen_frame = NSScreen.mainScreen().frame()
+        screen_width = screen_frame.size.width
+        screen_height = screen_frame.size.height
+
+        window_width = int(screen_width * 0.95)
+        window_height = int(screen_height * 0.95)
+        window_x = int((screen_width - window_width) / 2)
+        window_y = int((screen_height - window_height) / 2)
+
+        rect = NSRect(NSPoint(window_x, window_y), NSSize(window_width, window_height))
+        self.window = NSWindow.alloc().initWithContentRect_styleMask_backing_defer_(
+            rect, NSWindowStyleMaskBorderless, NSBackingStoreBuffered, False
+        )
+        self.window.setTitle_("Web Viewer")
+        self.window.setOpaque_(True)
+        self.window.setBackgroundColor_(
+            NSColor.windowBackgroundColor()
+        )  # respects dark mode
+        self.window.makeKeyAndOrderFront_(None)
+        self.app.activateIgnoringOtherApps_(True)
+
+        # Create the WebView inside the window
+        self.create_webview(window_width, window_height)
+
+    def create_webview(self, win_width, win_height):
+        # Configure the WebView
+        configuration = WKWebViewConfiguration.alloc().init()
+
+        # Create a WKWebView and embed it inside the window
+        webview = WKWebView.alloc().initWithFrame_configuration_(
+            NSRect(NSPoint(0, 0), NSSize(win_width, win_height)), configuration
+        )
+
+        # Load an HTML page (this can be a local file or URL)
+        html_content = """
+        <html>
+            <head><title>My Embedded WebView</title></head>
+            <body>
+                <h1>Welcome to the Embedded Browser!</h1>
+                <p>This is a simple example of embedding HTML content using WKWebView.</p>
+            </body>
+        </html>
+        """
+        webview.loadHTMLString_baseURL_(html_content, None)
+
+        # Add the WebView to the window's content view
+        self.window.contentView().addSubview_(webview)
+
+    def run(self):
+        self.app.run()
+
+
+if __name__ == "__main__":
+    app = WebViewerApp()
+    app.run()
