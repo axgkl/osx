@@ -2,7 +2,7 @@
 
 yabai feeds the fifo via:
 
-```
+```bash
 PY=/Users/gk/uv/osx/.venv/bin/python3
 # for mode in win spc; do
 for mode in spc; do
