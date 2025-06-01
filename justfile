@@ -15,7 +15,7 @@ start:
     {{python}} -m src.event_listener
 
 # Run all tests
-test: test-env test-import test-simplified test-keyboard-menu test-startup test-http
+test: test-env test-import test-simplified test-keyboard-menu test-startup test-mode-removal test-build-menu test-http
 
 # Test environment variable setup
 test-env:
@@ -72,6 +72,16 @@ docs-keyboard:
 test-startup:
     @echo "🧪 Testing event listener startup..."
     {{python}} test/test_event_listener_startup.py
+
+# Test S.mode removal
+test-mode-removal:
+    @echo "🧪 Testing S.mode removal..."
+    {{python}} test/test_mode_removal.py
+
+# Test build menu assignment
+test-build-menu:
+    @echo "🧪 Testing build menu assignment..."
+    {{python}} test/test_build_menu_assignment.py
 
 # Test Hammerspoon integration
 test-hammerspoon:

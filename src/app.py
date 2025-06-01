@@ -37,13 +37,14 @@ def build_app(event_handlers):
     
     print("Creating YabaiMenuApp...")
     S.app = YabaiMenuApp()
-    S.app.build_menu = build_win_menu
     
-    if S.mode == "s":
-        print("Setting up space mode...")
-        event_handlers.space_changed([0, 0, "1"])
-        S.app.build_menu = build_spc_menu
-        S.app.build_menu()
+    # Set build_spc_menu directly as the build_menu method
+    S.app.build_menu = build_spc_menu
+    
+    # Always set up space mode
+    print("Setting up space mode...")
+    event_handlers.space_changed([0, 0, "1"])
+    S.app.build_menu()
     
     print("Starting app.run()...")
     S.app.run()

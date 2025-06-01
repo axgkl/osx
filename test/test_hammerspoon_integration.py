@@ -12,7 +12,6 @@ from src.event_listener import setup_http_listener
 
 def test_hammerspoon_events():
     """Test Hammerspoon keyboard event integration"""
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     S.cur_win = {}

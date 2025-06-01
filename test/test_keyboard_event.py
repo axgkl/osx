@@ -12,7 +12,6 @@ from src.event_listener import setup_http_listener
 
 def test_keyboard_event():
     """Test the new keyboard event handling"""
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     S.cur_win = {}

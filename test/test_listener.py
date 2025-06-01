@@ -20,18 +20,17 @@ def simple_build_app(event_handlers):
     print("Creating YabaiMenuApp...")
     S.app = YabaiMenuApp()
     
-    if S.mode == "s":
-        print("Setting up space mode...")
-        event_handlers.space_changed([0, 0, "1"])
-        S.app.build_menu = build_spc_menu
-        S.app.build_menu()
+    # Always set up space mode
+    print("Setting up space mode...")
+    event_handlers.space_changed([0, 0, "1"])
+    S.app.build_menu = build_spc_menu
+    S.app.build_menu()
     
     print("Starting app.run()...")
     S.app.run()
 
 def test_listener():
     S.fn_fifo = "/tmp/yabai-spc.fifo"
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     S.cur_win = {}

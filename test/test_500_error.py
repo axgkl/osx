@@ -17,7 +17,6 @@ class FailingEventHandlers(EventHandlers):
 
 def test_500_error():
     """Test that exceptions in event handlers return 500"""
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     S.cur_win = {}

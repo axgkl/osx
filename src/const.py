@@ -60,4 +60,3 @@ class S:
     windows = {}
     rebuild = False
     lognr = 0
-    mode = ""

@@ -10,7 +10,6 @@ from event_listener import setup_http_listener
 
 def run_test_server():
     # Set up basic state
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     S.cur_win = {}

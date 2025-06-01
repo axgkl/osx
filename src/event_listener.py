@@ -135,7 +135,6 @@ def run_event_listener(port=None, event_handlers_class=None, app_builder=None):
     if port is None:
         port = int(os.environ.get("OSX_EVTS_PORT", 10888))
 
-    S.mode = "s"  # Default to space mode for HTTP
     S.fn_fifo = f"/tmp/event-listener-{port}"  # For logging purposes
 
     # Kill any existing process using PID file

@@ -3,21 +3,18 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.const import S
-from src.events import EventHandlers
+from src.const import S, Events
 
 def simple_test():
     # Set up basic state
     S.fn_fifo = "/tmp/yabai-spc.fifo"
-    S.mode = "s"
     S.menutitle = {}
     S.windows = {}
     
     print(f"FIFO: {S.fn_fifo}")
-    print(f"Mode: {S.mode}")
     
     # Test event handlers
-    eh = EventHandlers()
+    eh = Events()
     print("Testing space_changed event...")
     eh.space_changed(['space_changed', '1', '2'])
     print(f"Menu title: {S.menutitle}")
