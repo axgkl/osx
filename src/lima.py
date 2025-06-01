@@ -1,4 +1,4 @@
-from const import S
+from .const import S
 import docker
 import psutil
 import humanize

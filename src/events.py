@@ -1,38 +1,18 @@
 #!/usr/bin/env python3
 from functools import partial
-from lima import Lima
-from const import FSPC, S, YabaiMenuApp, quit_app
+from .lima import Lima
+from .const import FSPC, S, YabaiMenuApp, quit_app
 
-import sys
 import os
-import threading
-import time
 import json
-from time import ctime
 import subprocess
-import reactivex as Rx
-from reactivex import operators as rx
-from reactivex.scheduler import ThreadPoolScheduler
 from AppKit import NSWorkspace, NSRunningApplication, NSImage, NSBitmapImageRep
 
+import sys
 sys.path.insert(0, os.environ["HOME"] + "/.config/yabai")
 from spec import arrange_spec
 
-pidfile = lambda: f"{S.fn_fifo}.pid"
-logfile = lambda: f"{S.fn_fifo}.log"
 Y = "/opt/homebrew/bin/yabai"
-
-
-def log(*msg):
-    print(*msg)
-    with open(logfile(), "a") as f:
-        f.write(" ".join(map(str, msg)) + "\n")
-    S.lognr += 1
-    if S.lognr < 1000:
-        return
-    with open(logfile(), "w") as f:
-        f.write("cleared log")
-    S.lognr = 0
 
 
 def switchwin(_, wid):
@@ -112,31 +92,9 @@ def system_sleep(_):
 
 def yabai_restart(_):
     os.system("yabai --restart-service")
-    # os.system("osascript -e 'tell application \"System Events\" to sleep'")
 
 
 sep = "─"
-
-
-d_icos = os.path.abspath(os.path.dirname(__file__)) + "/icos"
-
-
-def get_app_icon(win):
-    fn = f"{d_icos}/{win['app']}.png"
-    if os.path.exists(fn):
-        return fn
-    id = NSRunningApplication.runningApplicationWithProcessIdentifier_
-    app = id(win["pid"])
-    if not app:
-        return
-    icon = app.icon()
-    if not icon:
-        return
-    bitmap_rep = NSBitmapImageRep.imageRepWithData_(icon.TIFFRepresentation())
-    png = bitmap_rep.representationUsingType_properties_
-    with open(fn, "wb") as f:
-        f.write(png(4, None))
-    return fn
 
 
 def querywin(win):
@@ -238,6 +196,8 @@ wins = [w if isinstance(w, list) else [w] for w in wins]
 
 
 def win_menu_add(key, cb=None, title=None):
+    if not S.app:
+        return
     if title is None:
         title = f"{key}:"
     v = S.cur_win.get(key, "")
@@ -246,86 +206,99 @@ def win_menu_add(key, cb=None, title=None):
 
 
 def build_win_menu():
+    if not S.app:
+        return
     S.app.menu.clear()
     for l in wins:
         win_menu_add(*l)
 
 
-class Evts:
-    def none(evt):
+class EventHandlers:
+    def none(self, evt):
         print(evt)
 
-    def space_changed(evt: list):
+    def space_changed(self, evt: list):
         spaceidx = int(evt[2])
         S.menutitle["space"] = FSPC.get(spaceidx, 1)
-        S.app.set_title()
+        if S.app:
+            S.app.set_title()
 
-    def window_destroyed(evt: list):
+    def window_destroyed(self, evt: list):
         S.windows.pop(evt[1], 0)
 
-    def window_focused(evt: list):
+    def window_focused(self, evt: list):
         print(len(S.windows))
         wid = evt[1]
         fnico = window(wid)["ico"]
-        if fnico:
+        if fnico and S.app:
             S.app.icon = fnico
         build_win_menu()
 
-    # def ghostty_created(evt: list):
+    def keyboard_event(self, evt: list):
+        """Handle keyboard events from Hammerspoon"""
+        if len(evt) >= 4:
+            key_code, key_char, modifiers = evt[1], evt[2], evt[3]
+            
+            # Handle system events (logger start/stop)
+            if modifiers == "system":
+                if key_char == "logger_started":
+                    print("🎹 Keyboard logger started in Hammerspoon")
+                    S.menutitle["keyboard"] = "🎹"
+                elif key_char == "logger_stopped":
+                    print("⏸️ Keyboard logger stopped in Hammerspoon")
+                    S.menutitle.pop("keyboard", None)
+                if S.app:
+                    S.app.set_title()
+                return
+            
+            # Handle regular keyboard events
+            print(f"Keyboard event: {key_char} (code: {key_code}) modifiers: {modifiers}")
+            
+            # Update menu for special key combinations
+            if modifiers and ("cmd" in modifiers or "ctrl" in modifiers):
+                S.menutitle["keyboard"] = "⌨️"
+                if S.app:
+                    S.app.set_title()
+            
+            # You can add custom key combination handlers here
+            # Example: specific actions for certain key combinations
+            if "cmd" in modifiers and "ctrl" in modifiers:
+                if key_char == "r":
+                    print("🔄 Detected Hammerspoon reload combo")
+                elif key_char == "k":
+                    print("🎹 Detected keyboard logger toggle")
+        else:
+            print(f"Keyboard event: {evt}")
+
+    # def ghostty_created(self, evt: list):
     #     os.system('yabai -m query --spaces --space |jq ".index" ')
 
 
-def setup_fifo_listener():
-    s = Rx.from_iterable(fifo_stream()).pipe(
-        rx.map(lambda x: x.split()),
-        rx.group_by(lambda x: x[0]),
-        rx.flat_map(lambda s: s.pipe(rx.map(getattr(Evts, s.key, Evts.none)))),
-        # rx.map(lambda _: S.app.draw()),
-    )
-    s.subscribe(
-        on_next=lambda _: None,
-        on_error=lambda e: log(f"Error in stream: {e}"),
-        scheduler=ThreadPoolScheduler(),
-    )
-
-
-def fifo_stream():
-    while True:
-        with open(S.fn_fifo, "r") as fifo:
-            for line in fifo:
-                yield line.strip()
-
-
-if __name__ == "__main__":
-    S.fn_fifo = sys.argv[1]
-    S.mode = "s" if "spc" in S.fn_fifo else "w"
-    time.sleep(0.2 if S.mode == "s" else 0)
-    os.system(f"kill `pgrep -F {pidfile()}`")
-    with open(pidfile(), "w") as f:
-        f.write(str(os.getpid()))
-
-    log(f"Starting up {ctime()}")
-    Lima.prepare_docker_socket()
+def build_app(event_handlers):
+    """Build and run the menu app"""
+    print("Building app...")
+    try:
+        print("Preparing Lima docker socket...")
+        Lima.prepare_docker_socket()
+        print("✓ Lima preparation complete")
+    except Exception as e:
+        print(f"Warning: Lima preparation failed: {e}")
+    
+    print("Creating icons directory...")
     os.makedirs(d_icos, exist_ok=True)
-    if not os.path.exists(S.fn_fifo):
-        os.mkfifo(S.fn_fifo)
-    while True:
-        try:
-            setup_fifo_listener()
-            S.app = YabaiMenuApp()
-            S.app.build_menu = build_win_menu
-            if S.mode == "s":
-                Evts.space_changed([0, 0, "1"])
-                S.app.build_menu = build_spc_menu
-                S.app.build_menu()
-            S.app.run()
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            log(f"Error: {e}")
-            time.sleep(1)
-            continue
-        finally:
-            log("Exiting...")
-            os.remove(pidfile())
-            break
+    
+    print("Creating YabaiMenuApp...")
+    S.app = YabaiMenuApp()
+    S.app.build_menu = build_win_menu
+    
+    if S.mode == "s":
+        print("Setting up space mode...")
+        event_handlers.space_changed([0, 0, "1"])
+        S.app.build_menu = build_spc_menu
+        S.app.build_menu()
+    
+    print("Starting app.run()...")
+    S.app.run()
+
+
+
