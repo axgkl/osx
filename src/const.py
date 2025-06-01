@@ -43,6 +43,13 @@ def quit_app(_):
 log = print
 
 
+class Events:
+    """Base class for event handlers. Event modules import this and add their handlers."""
+    
+    def none(self, evt):
+        print(evt)
+
+
 class S:
     menutitle = {}
     fn_fifo = ""

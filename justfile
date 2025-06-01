@@ -15,7 +15,7 @@ start:
     {{python}} -m src.event_listener
 
 # Run all tests
-test: test-env test-import test-http
+test: test-env test-import test-simplified test-startup test-http
 
 # Test environment variable setup
 test-env:
@@ -42,10 +42,15 @@ test-http-errors:
     @echo "🧪 Testing HTTP error handling..."
     {{python}} test/test_http_errors.py
 
-# Test keyboard event handling
-test-keyboard:
-    @echo "🧪 Testing keyboard events..."
-    {{python}} test/test_keyboard_event.py
+# Test simplified structure  
+test-simplified:
+    @echo "🧪 Testing simplified structure..."
+    {{python}} test/test_simplified_structure.py
+
+# Test event listener startup
+test-startup:
+    @echo "🧪 Testing event listener startup..."
+    {{python}} test/test_event_listener_startup.py
 
 # Test Hammerspoon integration
 test-hammerspoon:

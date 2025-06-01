@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from functools import partial
 from .lima import Lima
-from .const import FSPC, S, YabaiMenuApp, quit_app
+from .const import FSPC, S, YabaiMenuApp, quit_app, Events
 
 import os
 import json
@@ -135,27 +135,7 @@ def arrange_wins(*_):
     [os.system(Y + f" -m space {nr} --balance") for nr in range(s)]
 
 
-def build_spc_menu(_=None):
-    S.app.menu.clear()
-    S.app.add("🔁 Refresh Menu", build_spc_menu)
-    S.app.add("🧹 Arrange", arrange_wins)
-    S.app.add("☯ Dark/White", toggle_darkmode)
-    S.app.add("🌙 System Sleep", system_sleep)
-    S.app.add("🔁 Restart Yabai", yabai_restart)
-    S.app.add("🚪Quit Menu", quit_app)
-    Lima.build_menu()
-
-
-# def start_docker_default(_):
-#     cmd = "docker context use lima-docker-default"
-#     os.system(cmd)
-#     cmd = "docker start gk-docker"
-#     os.system(cmd)
-#     cmd = "docker ps -a"
-#     output = os.popen(cmd).read().strip()
-#     log(output)
-
-
+# Window menu building functions
 noop = lambda *_: None
 wins = [
     ["title", noop, ""],
@@ -212,93 +192,6 @@ def build_win_menu():
     for l in wins:
         win_menu_add(*l)
 
-
-class EventHandlers:
-    def none(self, evt):
-        print(evt)
-
-    def space_changed(self, evt: list):
-        spaceidx = int(evt[2])
-        S.menutitle["space"] = FSPC.get(spaceidx, 1)
-        if S.app:
-            S.app.set_title()
-
-    def window_destroyed(self, evt: list):
-        S.windows.pop(evt[1], 0)
-
-    def window_focused(self, evt: list):
-        print(len(S.windows))
-        wid = evt[1]
-        fnico = window(wid)["ico"]
-        if fnico and S.app:
-            S.app.icon = fnico
-        build_win_menu()
-
-    def keyboard_event(self, evt: list):
-        """Handle keyboard events from Hammerspoon"""
-        if len(evt) >= 4:
-            key_code, key_char, modifiers = evt[1], evt[2], evt[3]
-            
-            # Handle system events (logger start/stop)
-            if modifiers == "system":
-                if key_char == "logger_started":
-                    print("🎹 Keyboard logger started in Hammerspoon")
-                    S.menutitle["keyboard"] = "🎹"
-                elif key_char == "logger_stopped":
-                    print("⏸️ Keyboard logger stopped in Hammerspoon")
-                    S.menutitle.pop("keyboard", None)
-                if S.app:
-                    S.app.set_title()
-                return
-            
-            # Handle regular keyboard events
-            print(f"Keyboard event: {key_char} (code: {key_code}) modifiers: {modifiers}")
-            
-            # Update menu for special key combinations
-            if modifiers and ("cmd" in modifiers or "ctrl" in modifiers):
-                S.menutitle["keyboard"] = "⌨️"
-                if S.app:
-                    S.app.set_title()
-            
-            # You can add custom key combination handlers here
-            # Example: specific actions for certain key combinations
-            if "cmd" in modifiers and "ctrl" in modifiers:
-                if key_char == "r":
-                    print("🔄 Detected Hammerspoon reload combo")
-                elif key_char == "k":
-                    print("🎹 Detected keyboard logger toggle")
-        else:
-            print(f"Keyboard event: {evt}")
-
-    # def ghostty_created(self, evt: list):
-    #     os.system('yabai -m query --spaces --space |jq ".index" ')
-
-
-def build_app(event_handlers):
-    """Build and run the menu app"""
-    print("Building app...")
-    try:
-        print("Preparing Lima docker socket...")
-        Lima.prepare_docker_socket()
-        print("✓ Lima preparation complete")
-    except Exception as e:
-        print(f"Warning: Lima preparation failed: {e}")
-    
-    print("Creating icons directory...")
-    os.makedirs(d_icos, exist_ok=True)
-    
-    print("Creating YabaiMenuApp...")
-    S.app = YabaiMenuApp()
-    S.app.build_menu = build_win_menu
-    
-    if S.mode == "s":
-        print("Setting up space mode...")
-        event_handlers.space_changed([0, 0, "1"])
-        S.app.build_menu = build_spc_menu
-        S.app.build_menu()
-    
-    print("Starting app.run()...")
-    S.app.run()
 
 
 

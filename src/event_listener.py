@@ -176,12 +176,11 @@ def run_event_listener(port=None, event_handlers_class=None, app_builder=None):
 
     try:
         if event_handlers_class is None:
-            from events import EventHandlers
-
-            event_handlers_class = EventHandlers
+            from .const import Events
+            event_handlers_class = Events
 
         if app_builder is None:
-            from events import build_app
+            from .app import build_app
 
         event_handlers = event_handlers_class()
         server = setup_http_listener(event_handlers, port)
@@ -215,6 +214,7 @@ if __name__ == "__main__":
     print(f"Starting event listener on port {port}")
 
     # Import here to avoid circular dependencies
-    from .events import EventHandlers, build_app
+    from .const import Events
+    from .app import build_app
 
-    run_event_listener(port, EventHandlers, build_app)
+    run_event_listener(port, Events, build_app)
