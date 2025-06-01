@@ -15,7 +15,7 @@ start:
     {{python}} -m src.event_listener
 
 # Run all tests
-test: test-env test-import test-simplified test-startup test-http
+test: test-env test-import test-simplified test-keyboard-menu test-startup test-http
 
 # Test environment variable setup
 test-env:
@@ -46,6 +46,27 @@ test-http-errors:
 test-simplified:
     @echo "🧪 Testing simplified structure..."
     {{python}} test/test_simplified_structure.py
+
+# Test keyboard menu behavior
+test-keyboard-menu:
+    @echo "🧪 Testing keyboard menu behavior..."
+    {{python}} test/test_keyboard_menu_behavior.py
+
+# Demo keyboard menu behavior
+demo-keyboard:
+    @echo "🎹 Demonstrating keyboard menu behavior..."
+    {{python}} test/demo_keyboard_menu.py
+
+# Show keyboard event documentation
+docs-keyboard:
+    @echo "📖 Opening keyboard event documentation..."
+    @if command -v bat >/dev/null 2>&1; then \
+        bat docs/keyboard_event.md; \
+    elif command -v less >/dev/null 2>&1; then \
+        less docs/keyboard_event.md; \
+    else \
+        cat docs/keyboard_event.md; \
+    fi
 
 # Test event listener startup
 test-startup:
